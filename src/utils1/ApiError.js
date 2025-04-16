@@ -16,7 +16,7 @@ class ApiError extends Error {
         this.success = false
         this.errors = errors
 
-    //   usefull for big line of code
+    //   usefull for big line of code(optional)
         if (stack) {
             this.stack = stack
         } else {
