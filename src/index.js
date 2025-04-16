@@ -11,6 +11,17 @@ dotenv.config({
 
 
 connectDB()
+// connectDB() is a async function
+// consuming promises
+.then(()=>{
+    app.listen(process.env.PORT || 8000, ()=>{
+        console.log(`Server is running at port : ${process.env.PORT}`)
+    })
+})
+.catch((error)=>{
+    console.log("Mongodb connection failed", error)
+    
+})
 
 
 
@@ -23,7 +34,7 @@ connectDB()
 //     try {
 //         // connecting with a db
 //         await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`)
-//         // listeners
+//         // listen
 //         app.on("error", (error)=>{
 //             console.log("app not able to talk with db", error)
 //             throw error
