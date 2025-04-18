@@ -71,7 +71,7 @@ userSchema.methods.generateAccessToken = function (){
     {
         //  first give payload(what info should be keep)
         _id: this._id,
-        email : this.eamil,
+        email : this.email,
         username: this.username,
         fullName: this.fullName
 
