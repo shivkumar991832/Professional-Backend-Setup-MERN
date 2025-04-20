@@ -16,7 +16,20 @@ app.use(express.json({limit : "16kb"}))
 app.use(express.urlencoded({extended : true, limit: "16kb"}))
 // one more final configuration that is a folder(public) that store pdf file or image
 app.use(express.static("public"))
-
 app.use(cookieParser())
+
+
+// routes import
+import userRouter from "./routes/user.routes.js"
+
+// routes decleration
+app.use("/api/v1/users", userRouter)
+
+
+// http://localhost:8000/users/register
+// http://localhost:8000/api/v1/users/login
+// standard practice
+// http://localhost:8000/api/v1/users/[your routes]
+
 export default app
 // export { app } 
