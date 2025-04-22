@@ -3,6 +3,7 @@ import multer from "multer";
 // configuration of multer
 
 // storage is middelware or methods
+// multer used to store your file(images) in a perticular files
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, "./public/temp")

@@ -2,10 +2,8 @@ import { asyncHandler } from "../utils1/asyncHandler.js";
 //asyncHandler is HOF which takes function as a argument
 import { ApiError } from "../utils1/ApiError.js";
 import { ApiResponse } from "../utils1/ApiResponse.js";
-import { User } from './../models/user.model';
 import { uploadOnCloudinary } from "../utils1/cloudinary.js";
-
-
+import { User } from "../models/user.model.js"
 
 
 // creating methods that register user
@@ -25,7 +23,11 @@ const registerUser = asyncHandler(async (req, res) =>{
 //req.body is a object that store form data
 
 const {fullName, email, username, password}= req.body
-console.log("email is ", email)
+
+console.log(req.body)
+
+
+//console.log("email is ", email)
 
 // if (fullName === "") {
 //     throw new ApiError(400, "full name is required")
@@ -40,7 +42,7 @@ if (
 
 }
 //check if user already exist - username or email
-const existedUser = User.findOne({
+const existedUser = await User.findOne({
     // using operator(imp)
     $or : [{ username }, { email }]
 })
@@ -53,8 +55,24 @@ const existedUser = User.findOne({
 //  req.body provide by express
 //  req.files provide by multer and its giving file access may be or not
 //  path is properties of multer
+
+
+// console.log(req.files)
+
 const avatarLocalPath = req.files?.avatar[0]?.path;
-const coverImageLocalPath = req.files?.coverImage[0]?.path;
+//const coverImageLocalPath = req.files?.coverImage[0]?.path;
+
+
+
+// solving "can't read properties of undefined"(famous error) error
+// classic if-else method
+let coverImageLocalPath ; // globally decleared 
+//if ("req.files aaya ki nhi " && "array aaya hai ki nhi" && "array ke andar koi element hai ki nhi(arr.length > 0") {}
+// coverImage is an array(should be : coverImage.length > 0) 
+
+if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+     coverImageLocalPath = req.files.coverImage[0].path
+}
 if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required")
 }
@@ -66,7 +84,7 @@ const avatar = await uploadOnCloudinary(avatarLocalPath)
 const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
 if (!avatar) {
-    throw new ApiError(400, "Avatar file is required")
+    throw new ApiError(402, "Avatar file is required")
 }
 
 //create user object- makes entry in db(db call)

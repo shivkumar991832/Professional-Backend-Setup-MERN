@@ -17,10 +17,13 @@ import fs from "fs"
                resource_type: "auto"
             })
             // now file has been uploaded successfully
-            console.log("file is uploaded on cloudinary success !!!", response.url)
+            //console.log("file is uploaded on cloudinary success !!!", response.url)
+            
+            // after file uploaded on cloudinary we must remove it from there
+            fs.unlinkSync(localFilePath)
             return response;
          } catch (error) {
-            fs.unlinkSync(localFilePath)///remove the locally(server) saved temporary file as the upload opeartion got failed
+            fs.unlinkSync(localFilePath)///remove the locally(server) saved temporary file because the upload opeartion got failed
             return null
          }
     }
