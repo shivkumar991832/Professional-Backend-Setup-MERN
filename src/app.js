@@ -14,7 +14,7 @@ app.use(express.json({limit : "16kb"}))
 
 // data can come in the form of URl(+),
 app.use(express.urlencoded({extended : true, limit: "16kb"}))
-// one more final configuration that is a folder(public) that store pdf file or image
+// one more final configuration that is a folder(public) that store pdf file or images
 app.use(express.static("public"))
 app.use(cookieParser())
 
