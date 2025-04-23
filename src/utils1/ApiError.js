@@ -2,7 +2,7 @@
 // Hendeling Api Error
 class ApiError extends Error {
     constructor(
-        // who ever use contructor must give below
+        // whoever use contructor must give below
         statusCode,
         message = "Something went wrong",
         errors = [],
