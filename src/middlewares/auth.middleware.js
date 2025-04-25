@@ -7,14 +7,14 @@
 // this block of code also reusable 
 
 
-import { ApiError } from "../utils1/ApiError";
-import { asyncHandler } from "../utils1/asyncHandler";
+import { ApiError } from "../utils1/ApiError.js";
+import { asyncHandler } from "../utils1/asyncHandler.js";
 import  Jwt from 'jsonwebtoken';
 import dotenv from "dotenv"
 dotenv.config({
     path : './.env'
 })
-import { User } from "../models/user.model";
+import { User } from "../models/user.model.js";
 
 // verify Token 
 export const verifyJWT = asyncHandler(async (req, _, next)=>{
@@ -22,20 +22,22 @@ export const verifyJWT = asyncHandler(async (req, _, next)=>{
    try {
     
     const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "")
-
+    console.log(token)
    if (!token) {
     throw new ApiError(401, "Unauthorized Request")
    }
 
 
-  // Jwt.verify("string(token)", "ACCESS_TOKEN_SECRET")
+  // Jwt.verify("string(token)", "ACCESS_TOKEN_SECRET") || (decodedToken) is a object
    const decodedToken = Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
    //after verify we will get decoded information
 
+   console.log(decodedToken)
    const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
   
+
    if (!user) {
-    // TODO : discuss about frontend
+     
      throw new ApiError(401, "Invalid Access Token")
    }
 

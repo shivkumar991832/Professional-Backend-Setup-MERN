@@ -6,7 +6,7 @@ const app = express()
 
 app.use(cors({
     origin : process.env.CORS_ORIGIN,
-    credentials : true
+    // credentials : true
 }))
 // data coming in different formate in the backend i.e json formate, form data , body formate
 

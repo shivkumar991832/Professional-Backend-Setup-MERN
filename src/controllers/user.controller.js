@@ -4,7 +4,11 @@ import { ApiError } from "../utils1/ApiError.js";
 import { ApiResponse } from "../utils1/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils1/cloudinary.js";
 import { User } from "../models/user.model.js"
-import { cookieParser } from 'cookie-parser';
+import  Jwt  from 'jsonwebtoken';
+import dotenv from "dotenv"
+dotenv.config({
+    path : './.env'
+})
 
 const generateAccessAndRefreshToken = async(userId)=>{
    try {
@@ -15,7 +19,7 @@ const generateAccessAndRefreshToken = async(userId)=>{
     
     // add refreshToken in object(user) or db
     user.refreshToken = refreshToken
-    // saving the object data after updation
+    // saving the object data after updation(in db)
     await user.save({ validateBeforeSave : false })
     
     return {accessToken, refreshToken}
@@ -47,9 +51,6 @@ const {fullName, email, username, password}= req.body
 
 console.log(req.body)
 
-
-//console.log("email is ", email)
-
 // if (fullName === "") {
 //     throw new ApiError(400, "full name is required")
 // }
@@ -62,6 +63,11 @@ if (
     throw new ApiError(400, "full name is required")
 
 }
+
+if(!username && !email){
+    throw new ApiError(400, "Username or email is required")
+}
+
 //check if user already exist - username or email
 const existedUser = await User.findOne({
     // using operator(imp)
@@ -158,7 +164,7 @@ const loginUser = asyncHandler( async (req, res)=>{
      const {email , username , password} = req.body
 
     // access give to user on which basis - username or email
-     if (!username || !email) {
+     if (!(username || email)) {
          throw new ApiError(400, "username or email is required")
      }
      
@@ -203,6 +209,7 @@ const loginUser = asyncHandler( async (req, res)=>{
     // app.use(cookieParser()) help you to use .cookie its also allow to use (req.cookie or res.cookie)
 
 
+
     // response return (login succesfully)
 
     // cookie("key", value, options)
@@ -220,6 +227,7 @@ const loginUser = asyncHandler( async (req, res)=>{
 })
 
 // creating methods that logout user(for this we need to removes refreshToken from the database)
+// we need to add "user" data in req object(auth.middleware.js)
 const logoutUser = asyncHandler(async (req, res)=>{
     //  User.deleteOne(req.user.refreshToken)
    await User.findByIdAndUpdate(
@@ -244,12 +252,66 @@ const logoutUser = asyncHandler(async (req, res)=>{
 
     return res
     .status(200)
-    // .clearCookie is a built in methods
+    // .clearCookie is a built in methods to clear cookie(access and refresh token) when user logout
     .clearCookie("accessToken" , options)
     .clearCookie("refreshToken", options)
     .json(
         new ApiResponse(200, {}, "User Logged Out Successfully")
     )
+})
+
+// making end point of refresh and access Token
+//before end point need to build controller
+
+const refresAccessToken = asyncHandler(async(req, res)=>{
+   // refresh token can access from cookies
+   // we already have a refresh token in db so its new refresh token name as incomingRefreshToken
+  const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unauthorized Request(Token Invalid)")
+  }
+
+  try {
+    // this decodedToken can make mistakes(use try catch block)
+    // now we need to jwt verification
+    const decodedToken = Jwt.verify( incomingRefreshToken , process.env.REFRESH_TOKEN_SECRET )
+  
+  
+    // talking to database(await) || decodedToken is a object
+    const user = await User.findById(decodedToken?._id)
+  
+    if (!user) {
+      throw new ApiError(401, "Invalid Refresh Token")
+    }
+  
+    // matching both refresh Token
+    if (incomingRefreshToken !== user.refreshToken) {
+      throw new ApiError(401, "Refresh Token is expired or used")
+    }
+  
+    // making option for cookies
+    const options = {
+      httpOnly : true,
+      secure : true
+    }
+  
+    const { newAccessToken , newRefreshToken } = await generateAccessAndRefreshToken(user._id)
+     
+    // now sending response
+    return res
+    .status(200)
+    .cookie("accessToken", newAccessToken, options)
+    .cookie("refreshToken",newRefreshToken, options)
+    .json(
+      new ApiResponse(200, {
+          // key : value
+          accessToken : newAccessToken,
+          refreshToken : newRefreshToken
+      }, "Access Token Refreshed Succesfully")
+    )
+  } catch (error) {
+     throw new ApiError(401, error?.message || "Invalid RefreshToken ")
+  }
 })
 
 
@@ -260,7 +322,8 @@ const logoutUser = asyncHandler(async (req, res)=>{
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refresAccessToken
 }
 
 
