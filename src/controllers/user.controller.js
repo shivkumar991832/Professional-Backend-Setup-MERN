@@ -10,6 +10,9 @@ dotenv.config({
     path : './.env'
 })
 
+
+
+
 const generateAccessAndRefreshToken = async(userId)=>{
    try {
     // finding user(document) - object
@@ -260,9 +263,9 @@ const logoutUser = asyncHandler(async (req, res)=>{
     )
 })
 
-// making end point of refresh and access Token
+// making end point of Refresh Token
 //before end point need to build controller
-
+// refresAccessToken is a controller
 const refresAccessToken = asyncHandler(async(req, res)=>{
    // refresh token can access from cookies
    // we already have a refresh token in db so its new refresh token name as incomingRefreshToken

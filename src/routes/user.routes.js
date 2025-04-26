@@ -29,6 +29,7 @@ router.route("/login").post(loginUser)
 // secured routes
 router.route("/logout").post(verifyJWT, logoutUser)
 // here not required (verifyJWT)
+// making end point of Refresh Token
 router.route("/refresh-token").post(refresAccessToken)
 export default router
  

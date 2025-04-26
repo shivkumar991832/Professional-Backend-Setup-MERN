@@ -17,6 +17,7 @@ dotenv.config({
 import { User } from "../models/user.model.js";
 
 // verify Token 
+// verifyJWT is used to verify the user . After user got verified it will add in req object
 export const verifyJWT = asyncHandler(async (req, _, next)=>{
 
    try {
@@ -32,7 +33,7 @@ export const verifyJWT = asyncHandler(async (req, _, next)=>{
    const decodedToken = Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
    //after verify we will get decoded information
 
-   console.log(decodedToken)
+
    const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
   
 
