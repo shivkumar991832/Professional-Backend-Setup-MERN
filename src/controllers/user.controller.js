@@ -9,6 +9,7 @@ import dotenv from "dotenv"
 dotenv.config({
     path : './.env'
 })
+import fs from "fs"
 
 
 
@@ -32,7 +33,6 @@ const generateAccessAndRefreshToken = async(userId)=>{
       throw new ApiError(500, "Something went wrong while generating access and refresh token", error )
    }
 }
-
 
 // creating methods that register user
 const registerUser = asyncHandler(async (req, res) =>{
@@ -400,9 +400,15 @@ const updateUserAvatar = asyncHandler( async(req, res)=>{
     // upload on cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
+    
+
     if (!avatar.url) {
         throw new ApiError(200, "Error While Uploading Avatar")
     }
+
+    // delete avatar after upload on cloudinary
+
+     fs.unlinkSync(avatarLocalPath)
 
     //updating files
     const user = await User.findByIdAndUpdate(
@@ -441,13 +447,16 @@ const updateUserCoverImage = asyncHandler( async(req, res)=>{
      if (!coverImage.url) {
          throw new ApiError(200, "Error While Uploading Cover Image")
      }
+
+     fs.unlinkSync(coverImageLocalPath)
+
  
      //updating files
      const user = await User.findByIdAndUpdate(
          req.user?._id,
          {
              $set : {
-                 coverImage : coverImage.url
+                 coverImage : coverImage.url // string = new string
              }
          },
          {new : true} // return info  after Update
@@ -464,7 +473,99 @@ const updateUserCoverImage = asyncHandler( async(req, res)=>{
  })
 
 
+const getUserChannelProfile = asyncHandler(async (req , res)=>{
+   // for access user profile we need channel url || need params
 
+   const { username } = req.params
+   if (!username?.trim()) {
+      throw new ApiError(400, "username is missing")
+   }
+
+
+   // username is unique value
+//    const user = await User.find({username})
+
+// better teqnique using aggregation pipeline
+//   User.aggregate([
+//     {stage1},
+//     {stage2}
+//   ])
+
+const channel = await User.aggregate([
+    // filter 1st document
+    {
+        //1st pipeline
+        $match : {
+            username : username?.toLowerCase()
+        }
+    },
+    {
+        // finding no of subscriber of channel
+        $lookup :{
+            from : "subscriptions" ,// [collection name] lowercase in plural form
+            localField : "_id",
+            foreignField : "channel", // channel se subscriber milte hai
+            as : "subscribers" 
+        }
+    },
+    {   
+        // finding how many a channel subscribes another channel
+        $lookup : {
+            from : "subscriptions" ,// [collection name] lowercase in plural form
+            localField : "_id",
+            foreignField : "subscriber", // subscriber se channel milte hai
+            as : "subscriberTo"
+        }
+    },
+    // adding additional field in user as well as counting subscriber 
+    {
+        $addFields : {
+            subscribersCount : {
+                $size : "$subscribers" // $fields
+            },
+            channelsSubscribeToCount : {
+               $size : "$subscriberTo"
+            },
+            // Subscribe or Subscribed
+            isSubscribed : {
+               $cond : {
+                 //if(condtion) then(true) & else(false)
+                  if : {$in : [ req.user?._id,  "$subscribers.subscriber" ]}, // $in - present or not || $in for both array aand object
+                  then : true,
+                  else : false
+               } 
+            }
+        }
+    },
+    {  // project used for selective things to give
+        $project : {
+            fullName : 1,
+            username : 1,
+            subscribersCount : 1,
+            channelsSubscribeToCount : 1,
+            isSubscribed : 1,
+            avatar : 1,
+            coverImage : 1,
+            email : 1
+        }
+    }
+
+    // we wrote 5 pipepline
+
+  ])
+  // aggregate return a array
+
+// console.log(channel) [must]
+  if (!channel?.length) {
+    throw new ApiError(404, "Channel doest not exist")
+  }
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(200, channel[0] , "User Channel Fetched Successfully")
+  )
+})
 
 
 
@@ -478,7 +579,8 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile
 }
 
 

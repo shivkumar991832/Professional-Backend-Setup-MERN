@@ -1,4 +1,4 @@
-//this middleware use to verify user exist or not with the help of Token
+// this middleware use to verify user logged in or not with the help of Token
 // making custume middleware
 
 // app.use(cookieParser()) help you to use .cookie its also allow to use (req.cookie or res.cookie to access cookies)
