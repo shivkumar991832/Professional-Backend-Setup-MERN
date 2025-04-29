@@ -10,6 +10,8 @@ dotenv.config({
     path : './.env'
 })
 import fs from "fs"
+import mongoose from "mongoose";
+import { lookup } from "dns";
 
 
 
@@ -568,6 +570,69 @@ const channel = await User.aggregate([
 })
 
 
+// to get watch history from user
+
+const getWatchHistory = asyncHandler(async (req, res)=>{
+    const user = await User.aggregate([
+        {
+            $match : {
+                _id : new mongoose.Types.ObjectId(req.user?._id)  // create mongoose objectId || don't write like this here [_id : req.user?._id]
+            }
+        },
+        // lookup watchHistory of user
+        {
+            $lookup : {
+                from : "videos", // from video.model.js || collection Name
+                localField : "watchHistory",
+                foreignField : "_id",
+                as : "watchHistory",
+                // Now Watch History have multiple documents but owner(video.model.js) cant be accesss
+                // subpipeline for owner of video(document) || nested lookup
+                pipeline : [
+                    {
+                        $lookup : {
+                            from : "users", // kaha se karu lookup
+                            localField : "owner",
+                            foreignField : "_id", // user.model.js id
+                            as : "owner",
+                            // only selective things of owner should be give so another subpipeline
+                            pipeline : [
+                                {
+                                    $project : {
+                                        fullName : 1,
+                                        username : 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+
+                        }
+                    },
+                    //Example :- owner's data will return in the form of array || we just exract our values in that array
+                    // this is optional
+                    {
+                        $addFields : {
+                            // overwrite owner field
+                            owner : {
+                                $first : "$owner" // extract first elm of owner(field)
+                                //or -- $arrayElemAt : ["$owner", 0]
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user[0].watchHistory, "WatchHistory is Fetched Successfully")
+    )
+})
+
+
+
 
 
 export {
@@ -580,7 +645,8 @@ export {
     updateAccountDetails,
     updateUserAvatar,
     updateUserCoverImage,
-    getUserChannelProfile
+    getUserChannelProfile,
+    getWatchHistory
 }
 
 
