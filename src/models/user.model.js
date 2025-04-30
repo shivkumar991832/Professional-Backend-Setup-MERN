@@ -76,6 +76,8 @@ userSchema.methods.generateAccessToken = function (){
         fullName: this.fullName
 
     },
+    // signature
+
     // next is access token needed
     process.env.ACCESS_TOKEN_SECRET,
     {

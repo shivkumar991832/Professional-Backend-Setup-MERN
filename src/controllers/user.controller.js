@@ -240,9 +240,9 @@ const logoutUser = asyncHandler(async (req, res)=>{
         req.user._id,
         //what to update
         {
-            $set : {
+            $unset : {
                 // remove refreshToken
-                refreshToken : undefined
+                refreshToken : 1 
             }
         },
         {
@@ -257,7 +257,7 @@ const logoutUser = asyncHandler(async (req, res)=>{
 
     return res
     .status(200)
-    // .clearCookie is a built in methods to clear cookie(access and refresh token) when user logout
+    // .clearCookie is a built in methods to clear cookie(access and refresh token) in db, when user logout
     .clearCookie("accessToken" , options)
     .clearCookie("refreshToken", options)
     .json(
